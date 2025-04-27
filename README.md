@@ -55,6 +55,20 @@ Para resolver essas limitações, propõe-se o desenvolvimento de uma aplicaçã
    http://localhost:3000
    ```
 
+Você ainda pode user outros gerenciadores de pacotes como: npm, bun, yarn e etc, basta adaptar os comandos, por exemplo: 
+
+3. Instale as dependências:
+
+   ```bash
+   npm install
+   ```
+
+4. Inicie o servidor de desenvolvimento:
+
+   ```bash
+   npm dev
+   ```
+
 ## 📊 Funcionalidades
 
 - **Cadastro de Pacientes:** Registre informações pessoais e clínicas dos pacientes.
