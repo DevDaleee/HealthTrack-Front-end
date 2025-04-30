@@ -14,6 +14,10 @@ interface LoginFormValues {
 }
 
 const LoginPage = () => {
+  const [formValues, setFormValues] = useState<LoginFormValues>({
+    email: '',
+    password: '',
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -22,11 +26,52 @@ const LoginPage = () => {
     router.push(path);
   };
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormValues((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
   const handleSubmit = async (values: LoginFormValues) => {
     setLoading(true);
     setError(null);
-    // Login logic here
-    setLoading(false);
+
+    try {
+      const response = await fetch('http://localhost:8000/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          Accept: 'application/json',
+        },
+        body: new URLSearchParams({
+          grant_type: 'password',
+          username: values.email,
+          password: values.password,
+          scope: '',
+          client_id: '',
+          client_secret: '',
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        setError('Erro ao fazer login');
+        console.error(errorData);
+        return;
+      }
+
+      const data = await response.json();
+      console.log('Login bem-sucedido:', data);
+      localStorage.setItem('access_token', data.access_token);
+      router.push('/dashboard');
+    } catch (err) {
+      setError('Erro de conexão com o servidor');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -51,21 +96,27 @@ const LoginPage = () => {
 
           {error && <p className="text-red-500 text-center mb-4">{error}</p>}
 
-          <form className="space-y-4">
+          <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
             <TextInput
+              name="email"
               type="email"
-              placeholder={'Email'}
-              autoComplete={'email'}
+              placeholder="Email"
+              autoComplete="email"
+              value={formValues.email}
+              onChange={handleInputChange}
             />
             <TextInput
+              name="password"
               type="password"
-              placeholder={'Senha'}
-              autoComplete={'current-password'}
+              placeholder="Senha"
+              autoComplete="current-password"
+              value={formValues.password}
+              onChange={handleInputChange}
             />
             <CustomButton
               loading={loading}
-              text={loading ? 'Entrando...' : 'Fazer Login '}
-              onClick={() => console.log('Faz login')}
+              text={loading ? 'Entrando...' : 'Fazer Login'}
+              onClick={() => handleSubmit(formValues)}
             />
             <Divider text="Ainda não tem conta?" />
 
@@ -73,7 +124,7 @@ const LoginPage = () => {
               loading={false}
               text="Cadastrar"
               textColor="text-black"
-              onClick={() => router.push('/auth/signin')}
+              onClick={() => handleNavigation('/auth/signin')}
               bgColor="bg-white"
               borderColor="border-blue-300"
             />
