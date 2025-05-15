@@ -8,7 +8,7 @@ interface Props {
 
 export default function DemographicStep({ formData, onChange, onNext }: Props) {
   return (
-    <div className="justify-center p-10">
+    <div className="justify-center p-10 w-[1500px] h-[500px]">
       <h2 className="text-2xl font-bold mb-4 flex items-center">
         <User className="mr-2" /> Informações Demográficas
       </h2>

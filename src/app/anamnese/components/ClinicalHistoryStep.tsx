@@ -14,7 +14,7 @@ export default function ClinicalHistoryStep({
   onPrev,
 }: Props) {
   return (
-    <div className="justify-center p-10">
+    <div className="justify-center p-10 w-[1500px] h-[500px]">
       <h2 className="text-2xl font-bold mb-4 flex items-center">
         <HeartPulse className="mr-2" /> História Clínica
       </h2>

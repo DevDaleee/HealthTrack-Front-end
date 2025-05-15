@@ -5,7 +5,7 @@ interface props {
 const CircularProgressIndicator = ({ progressPercentage }: props) => {
   return (
     <div className=" flex justify-end">
-      <div className="relative w-25 h-25 p-1">
+      <div className="relative w-30 h-30 p-1">
         <svg viewBox="0 0 36 36" className="w-full h-full">
           <path
             d="M18 2.0845
@@ -27,7 +27,7 @@ const CircularProgressIndicator = ({ progressPercentage }: props) => {
           <text
             x="18"
             y="20.35"
-            className="text-x font-bold"
+            className="text-[12px] font-bold"
             textAnchor="middle"
             fill="#333"
           >

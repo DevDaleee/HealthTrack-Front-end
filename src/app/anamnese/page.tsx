@@ -6,6 +6,7 @@ import NutritionalHistoryStep from './components/NutritionalHistoryStep';
 import ClinicalHistoryStep from './components/ClinicalHistoryStep';
 import BottomWave from '../components/bottom_wave';
 import CircularProgressIndicator from './components/circularProgressIndicator';
+import { useRouter } from 'next/navigation';
 
 // Define interface for form data to ensure type safety
 interface FormData {
@@ -146,15 +147,16 @@ const NutritionalForm = () => {
     setCurrentStep((prev) => Math.max(prev - 1, 1));
   };
 
+  const router = useRouter(); // mover para o topo do componente
+
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     console.log('Form submitted:', formData);
-    // Here you would typically send the data to a backend
-    setCurrentStep(4); // Move to success page
+    setCurrentStep(4);
+    // setTimeout(() => router.push('/profile'), 5000);
   };
 
   const resetForm = () => {
-    // Reset to initial state with proper typing
     setFormData({
       name: '',
       birthDate: '',
@@ -212,8 +214,10 @@ const NutritionalForm = () => {
     <div className="relative w-screen h-screen bg-gray-100 flex items-center justify-center overflow-hidden">
       <BottomWave />
 
-      <div className="relative bg-white flex rounded-lg shadow-lg overflow-hidden w-[90%] max-w-9xl h-[500px]">
-        <CircularProgressIndicator progressPercentage={progressPercentage} />
+      <div className="relative bg-white flex rounded-lg shadow-lg overflow-hidden w-[90%] max-w-9xl h-[700px]">
+        {currentStep !== 4 && (
+          <CircularProgressIndicator progressPercentage={progressPercentage} />
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Demographic Information Step */}
@@ -245,25 +249,19 @@ const NutritionalForm = () => {
             />
           )}
 
-          {/* Success message after submission */}
           {currentStep === 4 && (
-            <div className="text-center py-8">
-              <div className="mx-auto bg-green-100 rounded-full w-16 h-16 flex items-center justify-center mb-4">
-                <Check className="text-green-500" size={32} />
+            <div className="justify-center p-10 w-[1500px] h-[500px] pt-50 pl-50">
+              <div className=" text-center py-8">
+                <div className="mx-auto bg-green-100 rounded-full w-16 h-16 flex items-center justify-center mb-4">
+                  <Check className="text-green-500" size={32} />
+                </div>
+                <h2 className="text-2xl font-bold text-green-600 mb-2">
+                  Formulário Enviado com Sucesso!
+                </h2>
+                <p className="text-gray-600">
+                  Obrigado por preencher o formulário de anamnese nutricional.
+                </p>
               </div>
-              <h2 className="text-2xl font-bold text-green-600 mb-2">
-                Formulário Enviado com Sucesso!
-              </h2>
-              <p className="text-gray-600">
-                Obrigado por preencher o formulário de anamnese nutricional.
-              </p>
-              <button
-                type="button"
-                onClick={resetForm}
-                className="mt-6 bg-green-500 text-white px-6 py-2 rounded hover:bg-green-600"
-              >
-                Preencher Novo Formulário
-              </button>
             </div>
           )}
         </form>
