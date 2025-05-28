@@ -39,19 +39,15 @@ const LoginPage = () => {
     setError(null);
 
     try {
-      const response = await fetch('http://localhost:8000/auth/login', {
+      const response = await fetch('http://127.0.0.1:8000/auth/token', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
           Accept: 'application/json',
         },
         body: new URLSearchParams({
-          grant_type: 'password',
           username: values.email,
           password: values.password,
-          scope: '',
-          client_id: '',
-          client_secret: '',
         }),
       });
 

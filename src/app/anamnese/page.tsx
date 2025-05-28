@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, ChangeEvent, FormEvent } from 'react';
-import { User, FileText, HeartPulse, Check } from 'lucide-react';
+import { Check } from 'lucide-react';
 import DemographicStep from './components/DemographicStep';
 import NutritionalHistoryStep from './components/NutritionalHistoryStep';
 import ClinicalHistoryStep from './components/ClinicalHistoryStep';
@@ -153,7 +153,7 @@ const NutritionalForm = () => {
     e.preventDefault();
     console.log('Form submitted:', formData);
     setCurrentStep(4);
-    // setTimeout(() => router.push('/profile'), 5000);
+    setTimeout(() => router.push('/profile'), 5000);
   };
 
   const resetForm = () => {
