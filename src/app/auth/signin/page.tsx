@@ -1,4 +1,5 @@
 'use client';
+
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
@@ -6,6 +7,11 @@ import BottomWave from '@/app/components/bottom_wave';
 import TextInput from '@/app/components/text_input';
 import Divider from '@/app/components/divider';
 import { CustomButton } from '@/app/components/custom_button';
+import {
+  useToast,
+  showErrorToast,
+  showSuccessToast,
+} from '@/app/components/toastification';
 import React from 'react';
 
 interface RegisterFormValues {
@@ -18,15 +24,17 @@ interface RegisterFormValues {
 
 const SigninPage = () => {
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [formValues, setFormValues] = useState<RegisterFormValues>({
     name: '',
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'user', // Default role
+    role: 'user',
   });
   const router = useRouter();
+  const { addToast } = useToast();
+  const showError = showErrorToast(addToast);
+  const showSuccess = showSuccessToast(addToast);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -38,55 +46,49 @@ const SigninPage = () => {
 
   const validateForm = () => {
     if (!formValues.name.trim()) {
-      setError('Nome é obrigatório.');
+      showError('Nome é obrigatório.');
       return false;
     }
-
     if (!formValues.email.trim()) {
-      setError('Email é obrigatório.');
+      showError('Email é obrigatório.');
       return false;
     }
-
     if (!/\S+@\S+\.\S+/.test(formValues.email)) {
-      setError('Email inválido.');
+      showError('Email inválido.');
       return false;
     }
-
     if (!formValues.password) {
-      setError('Senha é obrigatória.');
+      showError('Senha é obrigatória.');
       return false;
     }
-
     if (formValues.password.length < 6) {
-      setError('Senha deve ter pelo menos 6 caracteres.');
+      showError('Senha deve ter pelo menos 6 caracteres.');
       return false;
     }
-
     if (formValues.password !== formValues.confirmPassword) {
-      setError('As senhas não coincidem.');
+      showError('As senhas não coincidem.');
       return false;
     }
-
     return true;
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e?: React.FormEvent) => {
+    e?.preventDefault();
     if (!validateForm()) return;
 
     setLoading(true);
-    setError(null);
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/auth/register', {
+      const response = await fetch('http://localhost:8000/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          name: formValues.name,
-          email: formValues.email,
-          role: formValues.role,
+          username: formValues.email,
           password: formValues.password,
+          // full_name: formValues.name,
+          role: formValues.role,
         }),
       });
 
@@ -97,14 +99,19 @@ const SigninPage = () => {
           const validationErrors = data.detail
             .map((err: any) => err.msg)
             .join(' ');
-          throw new Error(validationErrors || 'Erro de validação.');
+          showError(validationErrors || 'Erro de validação.');
+        } else if (data.detail) {
+          showError(data.detail);
+        } else {
+          showError('Falha no registro. Tente novamente.');
         }
-        throw new Error('Falha no registro. Tente novamente.');
+        return;
       }
 
+      showSuccess('Cadastro realizado com sucesso!');
       router.push('/auth/login?registered=true');
     } catch (err: any) {
-      setError(err.message || 'Ocorreu um erro. Tente novamente.');
+      showError(err.message || 'Ocorreu um erro. Tente novamente.');
     } finally {
       setLoading(false);
     }
@@ -131,12 +138,7 @@ const SigninPage = () => {
           <h2 className="text-5xl font-bold text-center text-black mb-6">
             Cadastre-se
           </h2>
-          {error && (
-            <p className="text-red-500 text-center mb-4 bg-red-50 p-2 rounded">
-              {error}
-            </p>
-          )}
-          <div className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <TextInput
               type="text"
               name="name"
@@ -169,11 +171,52 @@ const SigninPage = () => {
               onChange={handleChange}
               autoComplete="new-password"
             />
+            <div className="flex flex-col items-center gap-2">
+              <p className="text-sm text-gray-600 font-medium text-center">
+                Selecione o tipo de conta que deseja criar:
+              </p>
+              <div className="flex justify-center items-center gap-4">
+                <span
+                  className={`font-medium ${
+                    formValues.role === 'paciente'
+                      ? 'text-blue-600'
+                      : 'text-gray-400'
+                  }`}
+                >
+                  Paciente
+                </span>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
+                    checked={formValues.role === 'nutricionista'}
+                    onChange={(e) =>
+                      setFormValues((prev) => ({
+                        ...prev,
+                        role: e.target.checked ? 'nutricionista' : 'paciente',
+                      }))
+                    }
+                  />
+                  <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:bg-blue-600 transition-colors duration-300"></div>
+                  <span className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform duration-300 transform peer-checked:translate-x-5"></span>
+                </label>
+                <span
+                  className={`font-medium ${
+                    formValues.role === 'nutricionista'
+                      ? 'text-blue-600'
+                      : 'text-gray-400'
+                  }`}
+                >
+                  Nutricionista
+                </span>
+              </div>
+            </div>
+
             <CustomButton
               loading={loading}
               text="Cadastrar"
               icon=""
-              onClick={handleSubmit}
+              type="submit"
             />
             <Divider text="Já tem uma conta?" />
             <CustomButton
@@ -185,7 +228,7 @@ const SigninPage = () => {
               borderColor="border-blue-300"
               onClick={handleLoginClick}
             />
-          </div>
+          </form>
         </div>
       </div>
     </div>

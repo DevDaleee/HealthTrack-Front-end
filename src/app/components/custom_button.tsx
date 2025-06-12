@@ -4,7 +4,8 @@ interface ButtonProps {
   loading?: boolean | null;
   text: string;
   icon?: React.ReactNode;
-  onClick: () => void;
+  onClick?: () => void;
+  type?: 'button' | 'submit' | 'reset';
   bgColor?: string;
   borderColor?: string;
   textColor?: string;
@@ -15,6 +16,7 @@ export const CustomButton = ({
   text,
   icon,
   onClick,
+  type = 'button',
   bgColor,
   borderColor,
   textColor,
@@ -22,7 +24,7 @@ export const CustomButton = ({
   return (
     <div className="flex justify-center">
       <button
-        type="button"
+        type={type}
         disabled={!!loading}
         onClick={onClick}
         className={`flex items-center justify-center gap-2 rounded-2xl p-3 w-2xs border-2 transition-all duration-300

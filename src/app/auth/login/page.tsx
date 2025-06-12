@@ -7,6 +7,11 @@ import BottomWave from '@/app/components/bottom_wave';
 import TextInput from '@/app/components/text_input';
 import Divider from '@/app/components/divider';
 import { CustomButton } from '@/app/components/custom_button';
+import {
+  useToast,
+  showErrorToast,
+  showSuccessToast,
+} from '@/app/components/toastification';
 
 interface LoginFormValues {
   email: string;
@@ -19,8 +24,10 @@ const LoginPage = () => {
     password: '',
   });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const { addToast } = useToast();
+  const showError = showErrorToast(addToast);
+  const showSuccess = showSuccessToast(addToast);
 
   const handleNavigation = (path: string) => {
     router.push(path);
@@ -36,10 +43,9 @@ const LoginPage = () => {
 
   const handleSubmit = async (values: LoginFormValues) => {
     setLoading(true);
-    setError(null);
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/auth/token', {
+      const response = await fetch('http://localhost:8000/auth/token', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
@@ -53,17 +59,25 @@ const LoginPage = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        setError('Erro ao fazer login');
-        console.error(errorData);
+        showError(errorData.detail || 'Erro ao fazer login');
         return;
       }
 
       const data = await response.json();
-      console.log('Login bem-sucedido:', data);
-      localStorage.setItem('access_token', data.access_token);
+      const token = data.access_token;
+
+      if (!token) {
+        showError('Token de acesso não recebido');
+        return;
+      }
+
+      // ✅ Armazena o token no localStorage
+      localStorage.setItem('access_token', token);
+
+      showSuccess('Login realizado com sucesso!');
       router.push('/dashboard');
     } catch (err) {
-      setError('Erro de conexão com o servidor');
+      showError('Erro de conexão com o servidor');
       console.error(err);
     } finally {
       setLoading(false);
@@ -73,7 +87,6 @@ const LoginPage = () => {
   return (
     <div className="relative w-screen h-screen bg-gray-100 flex items-center justify-center overflow-hidden">
       <BottomWave />
-
       <div className="relative bg-white flex rounded-lg shadow-lg overflow-hidden w-[90%] max-w-7xl h-[600px]">
         <div className="hidden md:block md:w-[1200px]">
           <Image
@@ -89,8 +102,6 @@ const LoginPage = () => {
           <h2 className="text-5xl font-bold text-center text-black mb-6">
             Faça Login
           </h2>
-
-          {error && <p className="text-red-500 text-center mb-4">{error}</p>}
 
           <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
             <TextInput
@@ -115,7 +126,6 @@ const LoginPage = () => {
               onClick={() => handleSubmit(formValues)}
             />
             <Divider text="Ainda não tem conta?" />
-
             <CustomButton
               loading={false}
               text="Cadastrar"
