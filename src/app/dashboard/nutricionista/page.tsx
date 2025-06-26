@@ -1,60 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { UserCog } from 'lucide-react';
-
-interface Paciente {
-  name: string;
-  age: number;
-  consultations: number;
-  wheight: number;
-  height: number;
-  status: 'active' | 'inactive' | 'pending';
-}
-
-const mockPacientes: Paciente[] = [
-  {
-    name: 'John Smith',
-    age: 34,
-    consultations: 8,
-    status: 'active',
-    wheight: 88,
-    height: 183,
-  },
-  {
-    name: 'Emily Johnson',
-    age: 29,
-    consultations: 5,
-    status: 'pending',
-    wheight: 88,
-    height: 183,
-  },
-  {
-    name: 'Michael Brown',
-    age: 45,
-    consultations: 12,
-    status: 'active',
-    wheight: 88,
-    height: 183,
-  },
-  {
-    name: 'Jessica Williams',
-    age: 52,
-    consultations: 3,
-    status: 'inactive',
-    wheight: 88,
-    height: 183,
-  },
-  {
-    name: 'William Davis',
-    age: 38,
-    consultations: 9,
-    status: 'active',
-    wheight: 88,
-    height: 183,
-  },
-];
+import Link from 'next/link';
 
 const statusColor = {
   active: 'bg-green-200 text-green-800',
@@ -62,15 +10,30 @@ const statusColor = {
   pending: 'bg-blue-100 text-blue-800',
 };
 
+interface Paciente {
+  uuid: string;
+  name: string;
+  age: number;
+  consultations: number;
+  wheight: number;
+  height: number;
+  status: 'active' | 'inactive' | 'pending';
+  weightHistory: number[];
+}
+
 export default function NutricionistaDashboard() {
   const [nomeUsuario, setNomeUsuario] = useState('Nutricionista');
-  const [pacientes, setPacientes] = useState(mockPacientes);
+  const [pacientes, setPacientes] = useState<Paciente[]>([]);
   const [busca, setBusca] = useState('');
-  const router = useRouter();
 
   useEffect(() => {
     const nome = localStorage.getItem('nome') || 'Nutricionista';
     setNomeUsuario(nome);
+
+    // fetch(`http://localhost:9000/${nutricionistaId}/pacientes`)
+      // .then((response) => response.json())
+      // .then((data) => setPacientes(data))
+      // .catch((error) => console.error('Erro ao carregar pacientes:', error));
   }, []);
 
   const pacientesFiltrados = pacientes.filter((p) =>
@@ -102,10 +65,10 @@ export default function NutricionistaDashboard() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {pacientesFiltrados.map((p, index) => (
+        {pacientesFiltrados.map((p) => (
           <div
-            key={index}
-            className="bg-white p-4 rounded-md shadow hover:shadow-md transition"
+            key={p.uuid}
+            className="bg-white p-4 rounded-md shadow hover:shadow-md transition cursor-pointer"
           >
             <div className="flex justify-between items-start mb-2">
               <h2 className="font-semibold text-lg text-gray-800">{p.name}</h2>
@@ -123,10 +86,12 @@ export default function NutricionistaDashboard() {
               Consultas: {p.consultations}
             </p>
 
-            <p className="text-sm text-gray-600">Idade: {p.age}</p>
-            <p className="text-sm text-gray-600">
-              Consultas: {p.consultations}
-            </p>
+            <Link
+              href={`/dashboard/nutricionista/result/${p.uuid}`}
+              className="text-[#0985AE] mt-2 block text-sm"
+            >
+              Ver detalhes
+            </Link>
           </div>
         ))}
       </div>

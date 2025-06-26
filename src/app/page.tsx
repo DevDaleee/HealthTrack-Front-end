@@ -13,8 +13,27 @@ function Home() {
       const token = localStorage.getItem('access_token');
 
       if (token) {
-        setIsAuthenticated(true);
-        router.push('/dashboard');
+        fetch('http://localhost:8000/auth/me', {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+          .then((response) => {
+            if (response.ok) {
+              setIsAuthenticated(true);
+              router.push('/dashboard');
+            } else {
+              setIsAuthenticated(false);
+              localStorage.removeItem('access_token'); 
+              router.push('/auth/login');
+            }
+          })
+          .catch((error) => {
+            console.error('Error checking authentication:', error);
+            setIsAuthenticated(false);
+            router.push('/auth/login');
+          });
       } else {
         setIsAuthenticated(false);
         router.push('/auth/login');
@@ -25,7 +44,7 @@ function Home() {
   if (isAuthenticated === null) {
     return (
       <div className="flex justify-center items-center h-screen w-screen">
-        Carregando...
+        Loading...
       </div>
     );
   }

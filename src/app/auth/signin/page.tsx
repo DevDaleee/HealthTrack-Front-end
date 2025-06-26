@@ -29,7 +29,7 @@ const SigninPage = () => {
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'user',
+    role: 'paciente',
   });
   const router = useRouter();
   const { addToast } = useToast();
@@ -86,8 +86,8 @@ const SigninPage = () => {
         },
         body: JSON.stringify({
           username: formValues.email,
+          email: formValues.email,
           password: formValues.password,
-          // full_name: formValues.name,
           role: formValues.role,
         }),
       });

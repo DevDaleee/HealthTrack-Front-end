@@ -71,7 +71,6 @@ const LoginPage = () => {
         return;
       }
 
-      // ✅ Armazena o token no localStorage
       localStorage.setItem('access_token', token);
 
       showSuccess('Login realizado com sucesso!');

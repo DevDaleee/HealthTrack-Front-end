@@ -8,9 +8,7 @@ import BottomWave from '../components/bottom_wave';
 import CircularProgressIndicator from './components/circularProgressIndicator';
 import { useRouter } from 'next/navigation';
 
-// Define interface for form data to ensure type safety
 interface FormData {
-  // Demographic Information
   name: string;
   birthDate: string;
   age: string;
@@ -27,7 +25,6 @@ interface FormData {
   occupation: string;
   assistanceReason: string;
 
-  // Nutritional History
   foodPreferences: string;
   foodAversions: string;
   dietaryRestrictions: string;
@@ -41,7 +38,6 @@ interface FormData {
   waterConsumption: string;
   ultraprocessedFoods: string;
 
-  // Clinical History
   diagnosedDiseases: string;
   diagnosedDiseasesDetails: string;
   medications: string;
@@ -58,16 +54,15 @@ interface FormData {
   emotionalState: string;
   emotionalStateReason: string;
   currentTreatment: string;
-  treatmentDetails: string; // Added missing field
+  treatmentDetails: string;
   autonomy: string;
   autonomyReason: string;
-  otherFamilyDiseases?: string; // Added as optional
+  otherFamilyDiseases?: string; 
 }
 
 const NutritionalForm = () => {
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [formData, setFormData] = useState<FormData>({
-    // Initialize with empty strings for all fields
     name: '',
     birthDate: '',
     age: '',
@@ -124,7 +119,7 @@ const NutritionalForm = () => {
     const { name, value, type } = e.target;
     const isCheckbox = type === 'checkbox';
 
-    // Handle checkbox inputs
+
     if (isCheckbox) {
       const checkbox = e.target as HTMLInputElement;
       setFormData((prev) => ({
@@ -147,7 +142,7 @@ const NutritionalForm = () => {
     setCurrentStep((prev) => Math.max(prev - 1, 1));
   };
 
-  const router = useRouter(); // mover para o topo do componente
+  const router = useRouter();
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
