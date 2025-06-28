@@ -8,6 +8,7 @@ import {
   showWarningToast,
   showInfoToast,
 } from '@/app/components/toastification';
+import { User } from '@/models/user.model';
 
 interface DadosQuestionario {
   idade: number;
@@ -23,38 +24,79 @@ interface DadosQuestionario {
 
 interface RespostaQuestionario {
   total_score: number;
-  risk_level: 'Baixo' | 'Moderado' | 'Alto';
+  risk_level: string;
 }
 
-async function criarQuestionario(
-  pacienteId: number,
-  dados: DadosQuestionario
-): Promise<RespostaQuestionario> {
+function montarRespostasDoFormulario(dados: DadosQuestionario) {
+  const respostas = [];
+
+  if (dados.idade < 45) respostas.push({ question_id: 1, option_id: 1 });
+  else if (dados.idade < 55) respostas.push({ question_id: 1, option_id: 2 });
+  else if (dados.idade < 65) respostas.push({ question_id: 1, option_id: 3 });
+  else respostas.push({ question_id: 1, option_id: 4 });
+
+  if (dados.imc < 25) respostas.push({ question_id: 2, option_id: 5 });
+  else if (dados.imc < 30) respostas.push({ question_id: 2, option_id: 6 });
+  else respostas.push({ question_id: 2, option_id: 7 });
+
+  if (dados.sexo === 'Masculino') {
+    if (dados.circunferencia < 94)
+      respostas.push({ question_id: 3, option_id: 8 });
+    else if (dados.circunferencia <= 102)
+      respostas.push({ question_id: 3, option_id: 9 });
+    else respostas.push({ question_id: 3, option_id: 10 });
+  } else {
+    if (dados.circunferencia < 80)
+      respostas.push({ question_id: 4, option_id: 11 });
+    else if (dados.circunferencia <= 88)
+      respostas.push({ question_id: 4, option_id: 12 });
+    else respostas.push({ question_id: 4, option_id: 13 });
+  }
+
+  respostas.push({
+    question_id: 5,
+    option_id: dados.atividade_fisica ? 14 : 15,
+  });
+  respostas.push({
+    question_id: 6,
+    option_id: dados.consumo_frutas_diario ? 16 : 17,
+  });
+  respostas.push({
+    question_id: 7,
+    option_id: dados.uso_medicamentos_hipertensao ? 19 : 18,
+  });
+  respostas.push({
+    question_id: 8,
+    option_id: dados.historico_glicose_alta ? 21 : 20,
+  });
+
+  if (dados.historico_familiar === 'Sim: Avós, tios')
+    respostas.push({ question_id: 9, option_id: 23 });
+  else if (dados.historico_familiar === 'Sim: Pais, irmãos')
+    respostas.push({ question_id: 9, option_id: 24 });
+  else respostas.push({ question_id: 9, option_id: 22 });
+
+  return respostas;
+}
+
+async function enviarRespostasQuestionario(answers: any[]) {
   const response = await fetch(
-    `http://127.0.0.1:8000/pacientes/${pacienteId}/questionarios`,
+    `http://localhost:8000/questionarios/1/respostas`,
     {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(dados),
+      body: JSON.stringify({ answers }),
     }
   );
 
-  if (!response.ok) {
-    const contentType = response.headers.get('content-type');
-    const errorData = contentType?.includes('application/json')
-      ? await response.json()
-      : await response.text();
-    throw new Error(
-      typeof errorData === 'string' ? errorData : JSON.stringify(errorData)
-    );
-  }
+  if (!response.ok) throw new Error('Erro ao enviar respostas');
 
   return response.json();
 }
 
-const Diabetes = () => {
+const Diabetes = ({ id }: User) => {
   const { addToast } = useToast();
   const [carregando, setCarregando] = useState(false);
   const [resultado, setResultado] = useState<RespostaQuestionario | null>(null);
@@ -108,93 +150,23 @@ const Diabetes = () => {
     }
   };
 
-  const handleSubmitQuestionario = useCallback(
-    async (e: React.FormEvent) => {
-      e.preventDefault();
-      if (carregando) return;
+  const handleSubmitQuestionario = async () => {
+    if (!pacienteId) return showErrorToast(addToast)('Paciente não encontrado');
 
-      if (!validarFormulario()) {
-        mostrarErro('Por favor corrija os erros antes de enviar.');
-        return;
-      }
+    try {
+      const answers = montarRespostasDoFormulario(dadosFormulario);
+      const response = await enviarRespostasQuestionario(answers);
 
-      setCarregando(true);
-      mostrarInfo('Processando questionário...', 2000);
+      let nivel = 'Baixo';
+      if (response.total_score >= 8) nivel = 'Alto';
+      else if (response.total_score >= 4) nivel = 'Moderado';
 
-      try {
-        const resposta = await criarQuestionario(pacienteId, dadosFormulario);
-        setResultado(resposta);
-
-        mostrarSucesso(
-          `Questionário enviado com sucesso! Nível de Risco: ${resposta.risk_level}`,
-          6000
-        );
-
-        if (resposta.risk_level === 'Moderado') {
-          mostrarAviso(
-            'Risco moderado detectado. Considere consultar um profissional de saúde.',
-            8000
-          );
-        } else if (resposta.risk_level === 'Alto') {
-          mostrarErro(
-            'Risco alto detectado! Consulte um profissional de saúde imediatamente.',
-            10000
-          );
-        }
-      } catch (err: any) {
-        let mensagemErro = 'Erro desconhecido';
-        const acoesErro = [];
-
-        if (err instanceof Error) {
-          try {
-            const parsed =
-              err.message.startsWith('{') || err.message.startsWith('[')
-                ? JSON.parse(err.message)
-                : err.message;
-
-            if (typeof parsed === 'object') {
-              if (Array.isArray(parsed.detail)) {
-                mensagemErro = parsed.detail
-                  .map((e: any) => `${e.loc?.join('.') ?? 'erro'}: ${e.msg}`)
-                  .join(', ');
-              } else if (parsed.error) {
-                mensagemErro = parsed.error;
-              } else {
-                mensagemErro = JSON.stringify(parsed, null, 2);
-              }
-            } else {
-              mensagemErro = parsed;
-            }
-
-            acoesErro.push({
-              label: 'Ver Detalhes',
-              onClick: () =>
-                mostrarInfo(
-                  `Detalhes: ${
-                    typeof parsed === 'object'
-                      ? JSON.stringify(parsed, null, 2)
-                      : parsed
-                  }`,
-                  10000
-                ),
-            });
-          } catch {
-            mensagemErro = err.message;
-          }
-        }
-
-        acoesErro.push({
-          label: 'Tentar Novamente',
-          onClick: () => handleSubmitQuestionario(e),
-        });
-
-        mostrarErro(mensagemErro, 8000, acoesErro);
-      } finally {
-        setCarregando(false);
-      }
-    },
-    [carregando, pacienteId, dadosFormulario]
-  );
+      setResultado({ total_score: response.total_score, risk_level: nivel });
+    } catch (error) {
+      console.error('Erro:', error);
+      showErrorToast(addToast)('Erro ao calcular risco');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 py-6">
@@ -221,7 +193,7 @@ const Diabetes = () => {
                 </label>
                 <input
                   type="number"
-                  value={pacienteId}
+                  value={id}
                   onChange={(e) => setPacienteId(parseInt(e.target.value) || 0)}
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                     erros.pacienteId ? 'border-red-500' : 'border-gray-300'

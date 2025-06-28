@@ -9,7 +9,7 @@ const Dashboard = () => {
     const role = localStorage.getItem('user_role');
     if (role === 'nutricionista') {
       router.replace('/dashboard/nutricionista');
-    } else {
+    } else { 
       router.replace('/dashboard/paciente');
     }
   }, [router]);

@@ -25,7 +25,7 @@ function Home() {
               router.push('/dashboard');
             } else {
               setIsAuthenticated(false);
-              localStorage.removeItem('access_token'); 
+              localStorage.removeItem('access_token');
               router.push('/auth/login');
             }
           })

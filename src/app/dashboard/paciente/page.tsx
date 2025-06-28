@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { BookOpenCheck } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { User } from '@/models/user.model';
 
 interface Recomendacao {
   titulo: string;
@@ -10,30 +12,26 @@ interface Recomendacao {
 
 const mockRecomendacoes: Recomendacao[] = [
   {
-    titulo: 'Hipertensão',
-    descricao:
-      'Avalie seu risco de hipertensão com base em dados clínicos e hábitos.',
-  },
-  {
     titulo: 'Diabetes Tipo 2',
     descricao:
       'Verifique seu risco de desenvolver diabetes tipo 2 com este questionário.',
   },
 ];
 
-export default function PacienteDashboard() {
-  const [nomeUsuario, setNomeUsuario] = useState('Paciente');
+interface DashboardProps {
+  user: User;
+}
 
-  useEffect(() => {
-    const nome = localStorage.getItem('nome') || 'Paciente';
-    setNomeUsuario(nome);
-  }, []);
+export default function PacienteDashboard({ user }: DashboardProps) {
+  const router = useRouter();
+
+  console.log(user);
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-xl font-semibold flex items-center gap-2">
-          Dashboard de {nomeUsuario}{' '}
+          Olá, {user?.username! ?? 'Paciente'}!{' '}
           <BookOpenCheck className="text-gray-700 w-5 h-5" />
         </h1>
 
@@ -61,7 +59,10 @@ export default function PacienteDashboard() {
               </h2>
               <p className="text-sm text-gray-600 mb-4">{item.descricao}</p>
             </div>
-            <button className="bg-[#0985AE] text-white px-4 py-1 rounded hover:bg-lime-600 w-fit">
+            <button
+              className="bg-[#0985AE] text-white px-4 py-1 rounded hover:bg-lime-600 w-fit"
+              onClick={() => router.push('/quizzes/diabetes')}
+            >
               Iniciar
             </button>
           </div>
