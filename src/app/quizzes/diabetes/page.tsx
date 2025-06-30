@@ -8,10 +8,14 @@ import {
   showWarningToast,
   showInfoToast,
 } from '@/app/components/toastification';
-import { User } from '@/models/user.model';
+import Cookies from 'js-cookie';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface DadosQuestionario {
   idade: number;
+  peso: number;
+  altura: number;
   imc: number;
   circunferencia: number;
   sexo: 'Masculino' | 'Feminino';
@@ -80,28 +84,48 @@ function montarRespostasDoFormulario(dados: DadosQuestionario) {
 }
 
 async function enviarRespostasQuestionario(answers: any[]) {
+  const token = Cookies.get('access_token');
+
   const response = await fetch(
     `http://localhost:8000/questionarios/1/respostas`,
     {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ answers }),
+      body: JSON.stringify({
+        answers,
+        paciente_id: Cookies.get('quiz_user_id'),
+      }),
     }
   );
 
-  if (!response.ok) throw new Error('Erro ao enviar respostas');
+  if (!response.ok) {
+    const erro = await response.json();
+    console.error('Erro ao enviar respostas:', erro);
+    throw new Error(erro.detail || 'Erro ao enviar respostas');
+  }
 
   return response.json();
 }
 
-const Diabetes = ({ id }: User) => {
+const Diabetes = () => {
   const { addToast } = useToast();
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const id = Cookies.get('quiz_user_id');
+    if (id) {
+      setUserId(id);
+    }
+  }, []);
   const [carregando, setCarregando] = useState(false);
   const [resultado, setResultado] = useState<RespostaQuestionario | null>(null);
   const [dadosFormulario, setDadosFormulario] = useState<DadosQuestionario>({
     idade: 0,
+    peso: 0,
+    altura: 0,
     imc: 0,
     circunferencia: 0,
     sexo: 'Masculino',
@@ -111,6 +135,7 @@ const Diabetes = ({ id }: User) => {
     historico_glicose_alta: false,
     historico_familiar: 'Nenhum',
   });
+
   const [pacienteId, setPacienteId] = useState<number>(1);
   const [erros, setErros] = useState<Record<string, string>>({});
 
@@ -144,16 +169,33 @@ const Diabetes = ({ id }: User) => {
   };
 
   const handleInputChange = (campo: keyof DadosQuestionario, valor: any) => {
-    setDadosFormulario((prev) => ({ ...prev, [campo]: valor }));
+    setDadosFormulario((prev) => {
+      const updated = { ...prev, [campo]: valor };
+
+      // Cálculo automático do IMC
+      if (updated.peso > 0 && updated.altura > 0) {
+        const alturaMetros = updated.altura / 100;
+        updated.imc = Number((updated.peso / alturaMetros ** 2).toFixed(1));
+      }
+
+      return updated;
+    });
+
     if (erros[campo]) {
       setErros((prev) => ({ ...prev, [campo]: '' }));
     }
   };
 
   const handleSubmitQuestionario = async () => {
-    if (!pacienteId) return showErrorToast(addToast)('Paciente não encontrado');
+    if (!userId) {
+      showErrorToast(addToast)('Usuário não autenticado');
+      return;
+    }
+
+    if (!validarFormulario()) return;
 
     try {
+      setCarregando(true);
       const answers = montarRespostasDoFormulario(dadosFormulario);
       const response = await enviarRespostasQuestionario(answers);
 
@@ -162,11 +204,20 @@ const Diabetes = ({ id }: User) => {
       else if (response.total_score >= 4) nivel = 'Moderado';
 
       setResultado({ total_score: response.total_score, risk_level: nivel });
+      showSuccessToast(addToast)('Avaliação enviada com sucesso!');
+
+      setTimeout(() => {
+        router.push('/');
+      }, 20000);
     } catch (error) {
       console.error('Erro:', error);
       showErrorToast(addToast)('Erro ao calcular risco');
+    } finally {
+      setCarregando(false);
     }
   };
+
+  const router = useRouter();
 
   return (
     <div className="min-h-screen bg-gray-50 py-6">
@@ -183,30 +234,12 @@ const Diabetes = ({ id }: User) => {
           {/* Seção do Formulário */}
           <div className="lg:col-span-2">
             <form
-              onSubmit={handleSubmitQuestionario}
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSubmitQuestionario();
+              }}
               className="bg-white rounded-lg shadow-md p-6"
             >
-              {/* ID do Paciente */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  ID do Paciente *
-                </label>
-                <input
-                  type="number"
-                  value={id}
-                  onChange={(e) => setPacienteId(parseInt(e.target.value) || 0)}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    erros.pacienteId ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                  placeholder="Digite o ID do paciente"
-                />
-                {erros.pacienteId && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {erros.pacienteId}
-                  </p>
-                )}
-              </div>
-
               {/* Informações Pessoais */}
               <div className="mb-6">
                 <h3 className="text-lg font-semibold text-gray-800 mb-4">
@@ -260,31 +293,65 @@ const Diabetes = ({ id }: User) => {
                     </select>
                   </div>
 
-                  {/* IMC */}
+                  {/* Peso */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      IMC (kg/m²) *
+                      Peso (kg) *
                     </label>
                     <input
                       type="number"
                       step="0.1"
-                      value={dadosFormulario.imc || ''}
+                      value={dadosFormulario.peso || ''}
                       onChange={(e) =>
                         handleInputChange(
-                          'imc',
+                          'peso',
                           parseFloat(e.target.value) || 0
                         )
                       }
                       className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                        erros.imc ? 'border-red-500' : 'border-gray-300'
+                        erros.peso ? 'border-red-500' : 'border-gray-300'
                       }`}
-                      placeholder="Digite seu IMC"
+                      placeholder="Digite seu peso em kg"
                       min="10"
-                      max="50"
+                      max="300"
                     />
-                    {erros.imc && (
-                      <p className="text-red-500 text-sm mt-1">{erros.imc}</p>
+                    {erros.peso && (
+                      <p className="text-red-500 text-sm mt-1">{erros.peso}</p>
                     )}
+                  </div>
+
+                  {/* Altura */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Altura (cm) *
+                    </label>
+                    <input
+                      type="number"
+                      value={dadosFormulario.altura || ''}
+                      onChange={(e) =>
+                        handleInputChange(
+                          'altura',
+                          parseFloat(e.target.value) || 0
+                        )
+                      }
+                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        erros.altura ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                      placeholder="Digite sua altura em cm"
+                      min="50"
+                      max="250"
+                    />
+                    {erros.altura && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {erros.altura}
+                      </p>
+                    )}
+                  </div>
+                  <div className="text-sm text-gray-600 mt-2">
+                    IMC Calculado:{' '}
+                    <span className="font-medium">
+                      {dadosFormulario.imc || '--'}
+                    </span>
                   </div>
 
                   {/* Circunferência Abdominal */}

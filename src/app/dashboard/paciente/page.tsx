@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { BookOpenCheck } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import Cookies from 'js-cookie';
 import { User } from '@/models/user.model';
+import { useRouter } from 'next/navigation';
 
 interface Recomendacao {
   titulo: string;
@@ -18,20 +19,41 @@ const mockRecomendacoes: Recomendacao[] = [
   },
 ];
 
-interface DashboardProps {
-  user: User;
-}
-
-export default function PacienteDashboard({ user }: DashboardProps) {
+export default function PacienteDashboard() {
+  const [user, setUser] = useState<User | null>(null);
   const router = useRouter();
 
-  console.log(user);
+  useEffect(() => {
+    const token = Cookies.get('access_token');
+    if (!token) return;
+
+    fetch('http://localhost:8000/auth/me', {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/json',
+      },
+    })
+      .then(async (res) => {
+        if (res.ok) {
+          const data: User = await res.json();
+          setUser(data);
+        } else {
+          setUser(null);
+          Cookies.remove('access_token');
+        }
+      })
+      .catch((err) => {
+        console.error('Erro ao buscar usuário:', err);
+        setUser(null);
+      });
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-xl font-semibold flex items-center gap-2">
-          Olá, {user?.username! ?? 'Paciente'}!{' '}
+          Olá, {user?.username ?? 'Paciente'}!
           <BookOpenCheck className="text-gray-700 w-5 h-5" />
         </h1>
 
@@ -61,7 +83,14 @@ export default function PacienteDashboard({ user }: DashboardProps) {
             </div>
             <button
               className="bg-[#0985AE] text-white px-4 py-1 rounded hover:bg-lime-600 w-fit"
-              onClick={() => router.push('/quizzes/diabetes')}
+              onClick={() => {
+                if (user?.id) {
+                  Cookies.set('quiz_user_id', String(user.id), {
+                    expires: 0.01,
+                  });
+                  router.push('/quizzes/diabetes');
+                }
+              }}
             >
               Iniciar
             </button>

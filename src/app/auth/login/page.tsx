@@ -11,7 +11,8 @@ import {
   useToast,
   showErrorToast,
   showSuccessToast,
-} from '@/app/components/toastification';
+} from '@/app/components/toastification'
+import Cookies from 'js-cookie';
 
 interface LoginFormValues {
   email: string;
@@ -71,7 +72,7 @@ const LoginPage = () => {
         return;
       }
 
-      localStorage.setItem('access_token', token);
+      Cookies.set('access_token', token, { expires: 10 });
 
       showSuccess('Login realizado com sucesso!');
       router.push('/dashboard');

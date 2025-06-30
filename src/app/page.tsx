@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import LoginPage from './auth/login/page';
 import Dashboard from './dashboard/page';
+import Cookies from 'js-cookie';
 
 function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
@@ -10,7 +11,7 @@ function Home() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('access_token');
+      const token = Cookies.get('access_token');
 
       if (token) {
         fetch('http://localhost:8000/auth/me', {
