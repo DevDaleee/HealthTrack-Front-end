@@ -11,7 +11,7 @@ import {
   useToast,
   showErrorToast,
   showSuccessToast,
-} from '@/app/components/toastification'
+} from '@/app/components/toastification';
 import Cookies from 'js-cookie';
 
 interface LoginFormValues {

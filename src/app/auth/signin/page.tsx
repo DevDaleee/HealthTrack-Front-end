@@ -85,7 +85,7 @@ const SigninPage = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          username: formValues.email,
+          username: formValues.name,
           email: formValues.email,
           password: formValues.password,
           role: formValues.role,

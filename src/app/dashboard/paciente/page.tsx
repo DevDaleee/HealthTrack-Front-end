@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { BookOpenCheck } from 'lucide-react';
+import { BookOpenCheck, LogOut } from 'lucide-react';
 import Cookies from 'js-cookie';
 import { User } from '@/models/user.model';
 import { useRouter } from 'next/navigation';
@@ -22,42 +22,61 @@ const mockRecomendacoes: Recomendacao[] = [
 export default function PacienteDashboard() {
   const [user, setUser] = useState<User | null>(null);
   const router = useRouter();
+  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
 
   useEffect(() => {
     const token = Cookies.get('access_token');
-    if (!token) return;
+    const role = Cookies.get('role');
 
-    fetch('http://localhost:8000/auth/me', {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: 'application/json',
-      },
-    })
-      .then(async (res) => {
-        if (res.ok) {
-          const data: User = await res.json();
-          setUser(data);
-        } else {
-          setUser(null);
-          Cookies.remove('access_token');
-        }
+    if (!token || role !== 'paciente') {
+      router.replace('/');
+      return;
+    }
+
+    setIsAuthorized(true);
+
+    if (isAuthorized === true) {
+      const token = Cookies.get('access_token');
+      if (!token) return;
+
+      fetch('http://localhost:8000/auth/me', {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/json',
+        },
       })
-      .catch((err) => {
-        console.error('Erro ao buscar usuário:', err);
-        setUser(null);
-      });
-  }, []);
+        .then(async (res) => {
+          if (res.ok) {
+            const data: User = await res.json();
+            setUser(data);
+          } else {
+            setUser(null);
+            Cookies.remove('access_token');
+          }
+        })
+        .catch((err) => {
+          console.error('Erro ao buscar usuário:', err);
+          setUser(null);
+        });
+    }
+  }, [router]);
+
+  const handleLogout = () => {
+    Cookies.remove('access_token');
+    Cookies.remove('role');
+    setUser(null);
+    router.push('/');
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-xl font-semibold flex items-center gap-2">
           Olá, {user?.username ?? 'Paciente'}!
-          <BookOpenCheck className="text-gray-700 w-5 h-5" />
         </h1>
 
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
           <input
             type="text"
             placeholder="Buscar..."
@@ -65,6 +84,13 @@ export default function PacienteDashboard() {
           />
           <button className="bg-[#0985AE] text-white px-4 py-2 rounded-md hover:opacity-90">
             Buscar
+          </button>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-1 text-sm text-red-600 px-3 py-1 border border-red-300 rounded hover:bg-red-50 transition"
+          >
+            <LogOut className="w-4 h-4" />
+            Sair
           </button>
         </div>
       </div>

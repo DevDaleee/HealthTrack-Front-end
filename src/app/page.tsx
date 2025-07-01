@@ -20,8 +20,13 @@ function Home() {
             Authorization: `Bearer ${token}`,
           },
         })
-          .then((response) => {
+          .then(async (response) => {
             if (response.ok) {
+
+              const data = await response.json();
+              const role = data.role;
+              Cookies.set('role', role, { expires: 10 });
+
               setIsAuthenticated(true);
               router.push('/dashboard');
             } else {
