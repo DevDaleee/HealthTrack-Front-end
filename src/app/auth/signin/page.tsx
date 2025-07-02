@@ -79,7 +79,7 @@ const SigninPage = () => {
     setLoading(true);
 
     try {
-      const response = await fetch('https://healthtrack-backend-yquk.onrender.com/auth/register', {
+      const response = await fetch('https://healthtrack-backend-461h.onrender.com/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

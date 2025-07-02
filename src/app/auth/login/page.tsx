@@ -46,7 +46,7 @@ const LoginPage = () => {
     setLoading(true);
 
     try {
-      const response = await fetch('https://healthtrack-backend-yquk.onrender.com/auth/token', {
+      const response = await fetch('https://healthtrack-backend-461h.onrender.com/auth/token', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',

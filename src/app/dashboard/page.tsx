@@ -14,7 +14,7 @@ const Dashboard = () => {
       return;
     }
 
-    fetch('https://healthtrack-backend-yquk.onrender.com/auth/me', {
+    fetch('https://healthtrack-backend-461h.onrender.com/auth/me', {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
