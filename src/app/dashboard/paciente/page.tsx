@@ -39,7 +39,7 @@ export default function PacienteDashboard() {
       const token = Cookies.get('access_token');
       if (!token) return;
 
-      fetch('http://localhost:8000/auth/me', {
+      fetch('https://healthtrack-backend-yquk.onrender.com/auth/me', {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${token}`,

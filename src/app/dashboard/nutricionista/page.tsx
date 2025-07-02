@@ -33,7 +33,7 @@ export default function NutricionistaDashboard() {
     }
 
     // Buscar nome do nutricionista
-    fetch('http://localhost:8000/auth/me', {
+    fetch('https://healthtrack-backend-yquk.onrender.com/auth/me', {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -60,7 +60,7 @@ export default function NutricionistaDashboard() {
       });
 
     // Buscar pacientes
-    fetch('http://localhost:8000/nutricionistas/me/pacientes', {
+    fetch('https://healthtrack-backend-yquk.onrender.com/nutricionistas/me/pacientes', {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,

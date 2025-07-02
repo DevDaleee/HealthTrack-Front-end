@@ -87,7 +87,7 @@ async function enviarRespostasQuestionario(answers: any[]) {
   const token = Cookies.get('access_token');
 
   const response = await fetch(
-    `http://localhost:8000/questionarios/1/respostas`,
+    `https://healthtrack-backend-yquk.onrender.com/questionarios/1/respostas`,
     {
       method: 'POST',
       headers: {

@@ -36,7 +36,7 @@ export default function PacienteDetails() {
     if (!token) return;
 
     // Buscar lista de pacientes
-    fetch('http://localhost:8000/nutricionistas/me/pacientes', {
+    fetch('https://healthtrack-backend-yquk.onrender.com/me/pacientes', {
       headers: {
         Authorization: `Bearer ${token}`,
         Accept: 'application/json',
@@ -54,7 +54,7 @@ export default function PacienteDetails() {
       .catch((err) => console.error('Erro ao buscar pacientes:', err));
 
     // Buscar respostas
-    fetch(`http://localhost:8000/nutricionistas/pacientes/${id}/respostas`, {
+    fetch(`https://healthtrack-backend-yquk.onrender.com/nutricionistas/pacientes/${id}/respostas`, {
       headers: {
         Authorization: `Bearer ${token}`,
         Accept: 'application/json',
@@ -67,7 +67,7 @@ export default function PacienteDetails() {
         const templateIds = Array.from(new Set(data.map((r) => r.template_id)));
         return Promise.all(
           templateIds.map((tid) =>
-            fetch(`http://localhost:8000/questionarios/templates/${tid}`, {
+            fetch(`https://healthtrack-backend-yquk.onrender.com/questionarios/templates/${tid}`, {
               headers: {
                 Authorization: `Bearer ${token}`,
                 Accept: 'application/json',
