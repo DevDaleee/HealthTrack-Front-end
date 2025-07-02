@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { BookOpenCheck, LogOut } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import Cookies from 'js-cookie';
-import { User } from '@/models/user.model';
 import { useRouter } from 'next/navigation';
+import { User } from '@/models/user.model';
 
 interface Recomendacao {
   titulo: string;
@@ -21,45 +21,47 @@ const mockRecomendacoes: Recomendacao[] = [
 
 export default function PacienteDashboard() {
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
-  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
 
   useEffect(() => {
     const token = Cookies.get('access_token');
     const role = Cookies.get('role');
 
+    // Verifica se o usuário está autorizado
     if (!token || role !== 'paciente') {
       router.replace('/');
       return;
     }
 
-    setIsAuthorized(true);
-
-    if (isAuthorized === true) {
-      const token = Cookies.get('access_token');
-      if (!token) return;
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-      fetch(`${apiUrl}/auth/me`, {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: 'application/json',
-        },
-      })
-        .then(async (res) => {
-          if (res.ok) {
-            const data: User = await res.json();
-            setUser(data);
-          } else {
-            setUser(null);
-            Cookies.remove('access_token');
-          }
-        })
-        .catch((err) => {
-          console.error('Erro ao buscar usuário:', err);
-          setUser(null);
+    // Se autorizado, faz a busca pelo usuário
+    const fetchUserData = async () => {
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+        const res = await fetch(`${apiUrl}/auth/me`, {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: 'application/json',
+          },
         });
-    }
+
+        if (res.ok) {
+          const data: User = await res.json();
+          setUser(data);
+        } else {
+          setUser(null);
+          Cookies.remove('access_token');
+        }
+      } catch (err) {
+        console.error('Erro ao buscar usuário:', err);
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
   }, [router]);
 
   const handleLogout = () => {
@@ -68,6 +70,17 @@ export default function PacienteDashboard() {
     setUser(null);
     router.push('/');
   };
+
+  const handleStartQuiz = () => {
+    if (user?.id) {
+      Cookies.set('quiz_user_id', String(user.id), { expires: 0.01 });
+      router.push('/quizzes/diabetes');
+    }
+  };
+
+  if (loading) {
+    return <div>Carregando...</div>;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -109,14 +122,7 @@ export default function PacienteDashboard() {
             </div>
             <button
               className="bg-[#0985AE] text-white px-4 py-1 rounded hover:bg-lime-600 w-fit"
-              onClick={() => {
-                if (user?.id) {
-                  Cookies.set('quiz_user_id', String(user.id), {
-                    expires: 0.01,
-                  });
-                  router.push('/quizzes/diabetes');
-                }
-              }}
+              onClick={handleStartQuiz} // Redireciona para o quiz
             >
               Iniciar
             </button>

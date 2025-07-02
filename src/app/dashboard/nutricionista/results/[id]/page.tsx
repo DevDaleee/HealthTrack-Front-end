@@ -2,33 +2,22 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import Cookies from 'js-cookie';
 import { User } from '@/models/user.model';
-
-interface Resposta {
-  template_id: number;
-  total_score: number;
-  paciente_id: number;
-  interpretation: string;
-  data_resposta: string;
-}
-
-interface Template {
-  id: number;
-  title: string;
-}
+import Cookies from 'js-cookie';
 
 export default function PacienteDetails() {
   const { id } = useParams();
   const router = useRouter();
-
   const [paciente, setPaciente] = useState<User | null>(null);
-  const [respostas, setRespostas] = useState<Resposta[]>([]);
-  const [titulosTemplates, setTitulosTemplates] = useState<
-    Record<number, string>
-  >({});
+  const [respostas, setRespostas] = useState<any[]>([]); // A tipagem aqui pode ser ajustada conforme a estrutura das respostas
   const [loading, setLoading] = useState(true);
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+  const titulosTemplates: { [key: number]: string } = {
+    1: 'Template 1', // Exemplo de titulos de template
+    2: 'Template 2', // Exemplo de titulos de template
+    // Adicione mais títulos conforme necessário
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -36,8 +25,9 @@ export default function PacienteDetails() {
     const token = Cookies.get('access_token');
     if (!token) return;
 
-    // Buscar lista de pacientes
-    fetch(`${apiUrl}/nutricionista/me/pacientes`, {
+    // Buscar paciente pelo ID
+    fetch(`${apiUrl}/nutricionistas/me/pacientes`, {
+      method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
         Accept: 'application/json',
@@ -49,49 +39,30 @@ export default function PacienteDetails() {
         if (pacienteEncontrado) {
           setPaciente(pacienteEncontrado);
         } else {
-          console.warn('Paciente não encontrado.');
+          console.warn('Paciente não encontrado');
         }
       })
-      .catch((err) => console.error('Erro ao buscar pacientes:', err));
+      .catch((err) => {
+        console.error('Erro ao carregar pacientes:', err);
+        setPaciente(null);
+      });
 
-    // Buscar respostas
+    // Buscar respostas do paciente
     fetch(`${apiUrl}/nutricionistas/pacientes/${id}/respostas`, {
+      method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
         Accept: 'application/json',
       },
     })
       .then((res) => res.json())
-      .then((data: Resposta[]) => {
+      .then((data) => {
         setRespostas(data);
-        // Buscar os títulos dos templates
-        const templateIds = Array.from(new Set(data.map((r) => r.template_id)));
-        return Promise.all(
-          templateIds.map((tid) =>
-            fetch(`${apiUrl}/questionarios/templates/${tid}`, {
-              headers: {
-                Authorization: `Bearer ${token}`,
-                Accept: 'application/json',
-              },
-            })
-              .then((res) => res.json())
-              .then((template: Template) => ({
-                id: tid,
-                title: template.title,
-              }))
-          )
-        );
       })
-      .then((templates) => {
-        const map: Record<number, string> = {};
-        templates.forEach((t) => {
-          map[t.id] = t.title;
-        });
-        setTitulosTemplates(map);
+      .catch((err) => {
+        console.error('Erro ao carregar respostas:', err);
+        setRespostas([]);
       })
-      .catch((err) =>
-        console.error('Erro ao carregar respostas ou templates:', err)
-      )
       .finally(() => setLoading(false));
   }, [id]);
 
@@ -119,13 +90,7 @@ export default function PacienteDetails() {
 
       <div className="space-y-2 text-gray-700 mb-8">
         <p>
-          <strong>ID:</strong> {paciente.id}
-        </p>
-        <p>
           <strong>Email:</strong> {paciente.email}
-        </p>
-        <p>
-          <strong>Função:</strong> {paciente.role}
         </p>
       </div>
 
@@ -142,9 +107,6 @@ export default function PacienteDetails() {
                   <span className="font-bold text-xl">
                     {titulosTemplates[resposta.template_id] || 'Carregando...'}
                   </span>
-                </p>
-                <p>
-                  <strong>Template ID:</strong> {resposta.template_id}
                 </p>
                 <p>
                   <strong>Score:</strong> {resposta.total_score}
