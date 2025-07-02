@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { LogOut, UserCog } from 'lucide-react';
+import { LogOut, Plus } from 'lucide-react';
 import Link from 'next/link';
 import Cookies from 'js-cookie';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { User } from '@/models/user.model';
+import { useToast } from '@/app/components/toastification';
 
 interface Paciente {
   username: string;
@@ -16,9 +17,19 @@ interface Paciente {
 
 export default function NutricionistaDashboard() {
   const router = useRouter();
+  const pathname = usePathname(); // Usando usePathname ao invés de router.asPath
+  const { addToast } = useToast(); // Hook de toast
   const [nomeUsuario, setNomeUsuario] = useState('Carregando...');
   const [pacientes, setPacientes] = useState<Paciente[]>([]);
   const [busca, setBusca] = useState('');
+  const [showModal, setShowModal] = useState(false);
+  const [novoPaciente, setNovoPaciente] = useState({
+    username: '',
+    email: '',
+    password: '',
+  });
+  const [loading, setLoading] = useState(false);
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
   useEffect(() => {
     const token = Cookies.get('access_token');
@@ -33,7 +44,7 @@ export default function NutricionistaDashboard() {
     }
 
     // Buscar nome do nutricionista
-    fetch('https://healthtrack-backend-461h.onrender.com/auth/me', {
+    fetch(`${apiUrl}/auth/me`, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -60,7 +71,7 @@ export default function NutricionistaDashboard() {
       });
 
     // Buscar pacientes
-    fetch('https://healthtrack-backend-461h.onrender.com/nutricionistas/me/pacientes', {
+    fetch(`${apiUrl}/nutricionistas/me/pacientes`, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -85,11 +96,74 @@ export default function NutricionistaDashboard() {
   const pacientesFiltrados = pacientes.filter((p) =>
     p.username.toLowerCase().includes(busca.toLowerCase())
   );
+
   const handleLogout = () => {
     Cookies.remove('access_token');
     Cookies.remove('role');
     router.push('/');
   };
+
+  const handleAddPaciente = () => {
+    setShowModal(true);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNovoPaciente({
+      ...novoPaciente,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    const token = Cookies.get('access_token');
+    if (!token) return;
+
+    const pacienteData = {
+      ...novoPaciente,
+      role: 'paciente',
+      nutricionista_id: parseInt(Cookies.get('user_id') || '0'),
+    };
+
+    try {
+      const res = await fetch(`${apiUrl}/nutricionistas/pacientes`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(pacienteData),
+      });
+
+      if (res.ok) {
+        addToast({
+          message: 'Paciente cadastrado com sucesso!',
+          type: 'success',
+        });
+        setShowModal(false);
+        setNovoPaciente({ username: '', email: '', password: '' });
+
+        // Recarregar a página utilizando window.location.reload()
+        window.location.reload(); // Força o recarregamento da página
+      } else {
+        addToast({
+          message: 'Erro ao cadastrar paciente.',
+          type: 'error',
+        });
+      }
+    } catch (err) {
+      console.error('Erro ao adicionar paciente:', err);
+      addToast({
+        message: 'Erro ao adicionar paciente.',
+        type: 'error',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="flex justify-between items-center mb-6">
@@ -137,7 +211,96 @@ export default function NutricionistaDashboard() {
             </Link>
           </div>
         ))}
+
+        {/* Card para adicionar novos pacientes */}
+        <div
+          className="bg-white p-4 rounded-md shadow hover:shadow-md transition cursor-pointer flex flex-col justify-center items-center"
+          onClick={handleAddPaciente}
+        >
+          <button className="w-12 h-12 bg-[#0985AE] text-white rounded-full flex items-center justify-center mb-2">
+            <Plus className="w-6 h-6" />
+          </button>
+          <p className="text-gray-600 text-sm">Adicionar um paciente</p>
+        </div>
       </div>
+
+      {/* Modal de Adicionar Paciente */}
+      {showModal && (
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
+            <h2 className="text-xl mb-4">Cadastrar Novo Paciente</h2>
+            <form onSubmit={handleSubmit}>
+              <div className="mb-4">
+                <label
+                  htmlFor="username"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Nome de Usuário
+                </label>
+                <input
+                  type="text"
+                  id="username"
+                  name="username"
+                  value={novoPaciente.username}
+                  onChange={handleInputChange}
+                  required
+                  className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+                />
+              </div>
+              <div className="mb-4">
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Email
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={novoPaciente.email}
+                  onChange={handleInputChange}
+                  required
+                  className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+                />
+              </div>
+              <div className="mb-4">
+                <label
+                  htmlFor="password"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Senha
+                </label>
+                <input
+                  type="password"
+                  id="password"
+                  name="password"
+                  value={novoPaciente.password}
+                  onChange={handleInputChange}
+                  required
+                  className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+                />
+              </div>
+              <div className="flex justify-end gap-4">
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="bg-[#0985AE] text-white px-4 py-2 rounded-md"
+                >
+                  {loading ? 'Cadastrando...' : 'Cadastrar'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -85,21 +85,19 @@ function montarRespostasDoFormulario(dados: DadosQuestionario) {
 
 async function enviarRespostasQuestionario(answers: any[]) {
   const token = Cookies.get('access_token');
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
-  const response = await fetch(
-    `https://healthtrack-backend-461h.onrender.com/questionarios/1/respostas`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        answers,
-        paciente_id: Cookies.get('quiz_user_id'),
-      }),
-    }
-  );
+  const response = await fetch(`${apiUrl}/questionarios/1/respostas`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      answers,
+      paciente_id: Cookies.get('quiz_user_id'),
+    }),
+  });
 
   if (!response.ok) {
     const erro = await response.json();

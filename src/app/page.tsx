@@ -14,7 +14,8 @@ function Home() {
       const token = Cookies.get('access_token');
 
       if (token) {
-        fetch('https://healthtrack-backend-461h.onrender.com/auth/me', {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+        fetch(`${apiUrl}/auth/me`, {
           method: 'GET',
           headers: {
             Authorization: `Bearer ${token}`,
@@ -22,7 +23,6 @@ function Home() {
         })
           .then(async (response) => {
             if (response.ok) {
-
               const data = await response.json();
               const role = data.role;
               Cookies.set('role', role, { expires: 10 });

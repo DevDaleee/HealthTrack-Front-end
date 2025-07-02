@@ -28,6 +28,7 @@ export default function PacienteDetails() {
     Record<number, string>
   >({});
   const [loading, setLoading] = useState(true);
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
   useEffect(() => {
     if (!id) return;
@@ -36,7 +37,7 @@ export default function PacienteDetails() {
     if (!token) return;
 
     // Buscar lista de pacientes
-    fetch('https://healthtrack-backend-461h.onrender.com//pacientes', {
+    fetch(`${apiUrl}/nutricionista/me/pacientes`, {
       headers: {
         Authorization: `Bearer ${token}`,
         Accept: 'application/json',
@@ -54,7 +55,7 @@ export default function PacienteDetails() {
       .catch((err) => console.error('Erro ao buscar pacientes:', err));
 
     // Buscar respostas
-    fetch(`https://healthtrack-backend-461h.onrender.com/nutricionistas/pacientes/${id}/respostas`, {
+    fetch(`${apiUrl}/nutricionistas/pacientes/${id}/respostas`, {
       headers: {
         Authorization: `Bearer ${token}`,
         Accept: 'application/json',
@@ -67,7 +68,7 @@ export default function PacienteDetails() {
         const templateIds = Array.from(new Set(data.map((r) => r.template_id)));
         return Promise.all(
           templateIds.map((tid) =>
-            fetch(`https://healthtrack-backend-461h.onrender.com/questionarios/templates/${tid}`, {
+            fetch(`${apiUrl}/questionarios/templates/${tid}`, {
               headers: {
                 Authorization: `Bearer ${token}`,
                 Accept: 'application/json',

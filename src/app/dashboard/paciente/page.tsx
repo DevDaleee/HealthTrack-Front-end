@@ -38,8 +38,8 @@ export default function PacienteDashboard() {
     if (isAuthorized === true) {
       const token = Cookies.get('access_token');
       if (!token) return;
-
-      fetch('https://healthtrack-backend-461h.onrender.com/auth/me', {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      fetch(`${apiUrl}/auth/me`, {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${token}`,

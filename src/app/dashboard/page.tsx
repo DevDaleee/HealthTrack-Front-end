@@ -13,8 +13,9 @@ const Dashboard = () => {
       router.replace('/');
       return;
     }
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
-    fetch('https://healthtrack-backend-461h.onrender.com/auth/me', {
+    fetch(`${apiUrl}/auth/me`, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,

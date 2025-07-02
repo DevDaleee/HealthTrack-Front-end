@@ -46,7 +46,8 @@ const LoginPage = () => {
     setLoading(true);
 
     try {
-      const response = await fetch('https://healthtrack-backend-461h.onrender.com/auth/token', {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      const response = await fetch(`${apiUrl}/auth/token`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
