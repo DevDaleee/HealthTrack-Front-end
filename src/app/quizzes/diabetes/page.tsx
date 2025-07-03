@@ -333,7 +333,7 @@ const Diabetes = () => {
                       className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                         erros.altura ? 'border-red-500' : 'border-gray-300'
                       }`}
-                      placeholder="Digite sua altura em cm (ex: 170 ou 1,70)"
+                      placeholder="Digite sua altura em cm (ex: 170)"
                     />
                     {erros.altura_convertida && (
                       <p className="text-blue-600 text-sm mt-1">
