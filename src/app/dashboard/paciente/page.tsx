@@ -5,6 +5,7 @@ import { LogOut } from 'lucide-react';
 import Cookies from 'js-cookie';
 import { useRouter } from 'next/navigation';
 import { User } from '@/models/user.model';
+import { useMediaQuery } from 'react-responsive';
 
 interface Recomendacao {
   titulo: string;
@@ -17,24 +18,28 @@ const mockRecomendacoes: Recomendacao[] = [
     descricao:
       'Verifique seu risco de desenvolver diabetes tipo 2 com este questionário.',
   },
+  {
+    titulo: 'Hipertensão',
+    descricao:
+      'Verifique seu risco de desenvolver Hipertensão com este questionário.',
+  },
 ];
 
 export default function PacienteDashboard() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const isMobile = useMediaQuery({ maxWidth: 767 });
 
   useEffect(() => {
     const token = Cookies.get('access_token');
     const role = Cookies.get('role');
 
-    // Verifica se o usuário está autorizado
     if (!token || role !== 'paciente') {
       router.replace('/');
       return;
     }
 
-    // Se autorizado, faz a busca pelo usuário
     const fetchUserData = async () => {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -71,10 +76,15 @@ export default function PacienteDashboard() {
     router.push('/');
   };
 
-  const handleStartQuiz = () => {
+  const handleStartQuiz = (titulo: string) => {
     if (user?.id) {
       Cookies.set('quiz_user_id', String(user.id), { expires: 0.01 });
-      router.push('/quizzes/diabetes');
+
+      if (titulo === 'Diabetes Tipo 2') {
+        router.push('/quizzes/diabetes');
+      } else if (titulo === 'Hipertensão') {
+        router.push('/quizzes/hipertensao');
+      }
     }
   };
 
@@ -90,14 +100,19 @@ export default function PacienteDashboard() {
         </h1>
 
         <div className="flex items-center gap-2">
-          <input
-            type="text"
-            placeholder="Buscar..."
-            className="p-2 border border-gray-300 rounded-md"
-          />
-          <button className="bg-[#0985AE] text-white px-4 py-2 rounded-md hover:opacity-90">
-            Buscar
-          </button>
+          {!isMobile && (
+            <>
+              <input
+                type="text"
+                placeholder="Buscar..."
+                className="p-2 border border-gray-300 rounded-md"
+              />
+              <button className="bg-[#0985AE] text-white px-4 py-2 rounded-md hover:opacity-90">
+                Buscar
+              </button>
+            </>
+          )}
+
           <button
             onClick={handleLogout}
             className="flex items-center gap-1 text-sm text-red-600 px-3 py-1 border border-red-300 rounded hover:bg-red-50 transition"
@@ -108,7 +123,7 @@ export default function PacienteDashboard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {mockRecomendacoes.map((item, index) => (
           <div
             key={index}
@@ -122,7 +137,7 @@ export default function PacienteDashboard() {
             </div>
             <button
               className="bg-[#0985AE] text-white px-4 py-1 rounded hover:bg-lime-600 w-fit"
-              onClick={handleStartQuiz} // Redireciona para o quiz
+              onClick={() => handleStartQuiz(item.titulo)}
             >
               Iniciar
             </button>

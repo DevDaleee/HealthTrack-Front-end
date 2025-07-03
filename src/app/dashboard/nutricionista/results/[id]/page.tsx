@@ -9,15 +9,12 @@ export default function PacienteDetails() {
   const { id } = useParams();
   const router = useRouter();
   const [paciente, setPaciente] = useState<User | null>(null);
-  const [respostas, setRespostas] = useState<any[]>([]); // A tipagem aqui pode ser ajustada conforme a estrutura das respostas
+  const [respostas, setRespostas] = useState<any[]>([]);
+  const [titulosTemplates, setTitulosTemplates] = useState<
+    Record<number, string>
+  >({});
   const [loading, setLoading] = useState(true);
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-
-  const titulosTemplates: { [key: number]: string } = {
-    1: 'Template 1', // Exemplo de titulos de template
-    2: 'Template 2', // Exemplo de titulos de template
-    // Adicione mais títulos conforme necessário
-  };
 
   useEffect(() => {
     if (!id) return;
@@ -25,7 +22,7 @@ export default function PacienteDetails() {
     const token = Cookies.get('access_token');
     if (!token) return;
 
-    // Buscar paciente pelo ID
+    // Buscar paciente
     fetch(`${apiUrl}/nutricionistas/me/pacientes`, {
       method: 'GET',
       headers: {
@@ -47,7 +44,7 @@ export default function PacienteDetails() {
         setPaciente(null);
       });
 
-    // Buscar respostas do paciente
+    // Buscar respostas
     fetch(`${apiUrl}/nutricionistas/pacientes/${id}/respostas`, {
       method: 'GET',
       headers: {
@@ -64,6 +61,26 @@ export default function PacienteDetails() {
         setRespostas([]);
       })
       .finally(() => setLoading(false));
+
+    // Buscar templates
+    fetch(`${apiUrl}/questionarios/templates`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/json',
+      },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        const map: Record<number, string> = {};
+        data.forEach((template: any) => {
+          map[template.id] = template.title;
+        });
+        setTitulosTemplates(map);
+      })
+      .catch((err) => {
+        console.error('Erro ao carregar templates:', err);
+      });
   }, [id]);
 
   if (loading || !paciente) {
