@@ -10,9 +10,12 @@ import {
 } from '@/app/components/toastification';
 import Cookies from 'js-cookie';
 import { useRouter } from 'next/navigation';
+import { ChevronLeft } from 'lucide-react';
 
 interface DadosQuestionarioHipertensao {
   idade: number;
+  peso: number;
+  altura: number;
   imc: number;
   consumo_salgado_diario: 'Baixo' | 'Moderado' | 'Alto';
   atividade_fisica: 'Sim, regularmente' | 'Não, pouco ou nenhum exercício';
@@ -45,37 +48,31 @@ interface RespostaQuestionarioHipertensao {
 function montarRespostasDoFormulario(dados: DadosQuestionarioHipertensao) {
   const respostas = [];
 
-  // Idade
   if (dados.idade < 40) respostas.push({ question_id: 10, option_id: 25 });
   else if (dados.idade < 50) respostas.push({ question_id: 10, option_id: 26 });
   else if (dados.idade < 60) respostas.push({ question_id: 10, option_id: 27 });
   else respostas.push({ question_id: 10, option_id: 28 });
 
-  // IMC
   if (dados.imc < 25) respostas.push({ question_id: 11, option_id: 29 });
   else if (dados.imc < 30) respostas.push({ question_id: 11, option_id: 30 });
   else respostas.push({ question_id: 11, option_id: 31 });
 
-  // Consumo de Sal
   if (dados.consumo_salgado_diario === 'Baixo')
     respostas.push({ question_id: 12, option_id: 32 });
   else if (dados.consumo_salgado_diario === 'Moderado')
     respostas.push({ question_id: 12, option_id: 33 });
   else respostas.push({ question_id: 12, option_id: 34 });
 
-  // Atividade Física
   if (dados.atividade_fisica === 'Sim, regularmente')
     respostas.push({ question_id: 13, option_id: 35 });
   else respostas.push({ question_id: 13, option_id: 36 });
 
-  // Consumo de Álcool
   if (dados.consumo_alcool === 'Não consumo')
     respostas.push({ question_id: 14, option_id: 37 });
   else if (dados.consumo_alcool === 'Consumo leve a moderado')
     respostas.push({ question_id: 14, option_id: 38 });
   else respostas.push({ question_id: 14, option_id: 39 });
 
-  // Histórico Familiar de Hipertensão
   if (dados.historico_hipertensao_familiar === 'Não')
     respostas.push({ question_id: 15, option_id: 40 });
   else if (
@@ -85,21 +82,18 @@ function montarRespostasDoFormulario(dados: DadosQuestionarioHipertensao) {
     respostas.push({ question_id: 15, option_id: 41 });
   else respostas.push({ question_id: 15, option_id: 42 });
 
-  // Estresse
   if (dados.estresse === 'Baixo')
     respostas.push({ question_id: 16, option_id: 43 });
   else if (dados.estresse === 'Moderado')
     respostas.push({ question_id: 16, option_id: 44 });
   else respostas.push({ question_id: 16, option_id: 45 });
 
-  // Consumo de Alimentos Ultraprocessados
   if (dados.consumo_alimentos_ultraprocessados === 'Raramente')
     respostas.push({ question_id: 17, option_id: 46 });
   else if (dados.consumo_alimentos_ultraprocessados === 'Moderado')
     respostas.push({ question_id: 17, option_id: 47 });
   else respostas.push({ question_id: 17, option_id: 48 });
 
-  // Tabagismo
   if (dados.tabagismo === 'Nunca fumei')
     respostas.push({ question_id: 18, option_id: 49 });
   else if (dados.tabagismo === 'Parei de fumar há mais de um ano')
@@ -108,7 +102,6 @@ function montarRespostasDoFormulario(dados: DadosQuestionarioHipertensao) {
     respostas.push({ question_id: 18, option_id: 51 });
   else respostas.push({ question_id: 18, option_id: 52 });
 
-  // Pressão Arterial Elevada
   if (dados.pressao_arterial_elevada === 'Não')
     respostas.push({ question_id: 19, option_id: 53 });
   else if (dados.pressao_arterial_elevada === 'Sim, uma vez')
@@ -145,20 +138,17 @@ async function enviarRespostasQuestionario(answers: any[]) {
 
 const Hipertensao = () => {
   const { addToast } = useToast();
-  const [userId, setUserId] = useState<string | null>(null);
+  const router = useRouter();
 
-  useEffect(() => {
-    const id = Cookies.get('quiz_user_id');
-    if (id) {
-      setUserId(id);
-    }
-  }, []);
+  const [userId, setUserId] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(false);
   const [resultado, setResultado] =
     useState<RespostaQuestionarioHipertensao | null>(null);
   const [dadosFormulario, setDadosFormulario] =
     useState<DadosQuestionarioHipertensao>({
       idade: 0,
+      peso: 0,
+      altura: 0,
       imc: 0,
       consumo_salgado_diario: 'Baixo',
       atividade_fisica: 'Sim, regularmente',
@@ -170,24 +160,21 @@ const Hipertensao = () => {
       pressao_arterial_elevada: 'Não',
     });
 
-  const [pacienteId, setPacienteId] = useState<number>(1);
   const [erros, setErros] = useState<Record<string, string>>({});
 
-  const mostrarSucesso = showSuccessToast(addToast);
-  const mostrarErro = showErrorToast(addToast);
-  const mostrarAviso = showWarningToast(addToast);
-  const mostrarInfo = showInfoToast(addToast);
+  useEffect(() => {
+    const id = Cookies.get('quiz_user_id');
+    if (id) setUserId(id);
+  }, []);
 
   const validarFormulario = (): boolean => {
     const novosErros: Record<string, string> = {};
-
     if (dadosFormulario.idade <= 0 || dadosFormulario.idade > 120) {
       novosErros.idade = 'Idade precisa estar entre 1 e 120 anos';
     }
     if (dadosFormulario.imc <= 0 || dadosFormulario.imc > 50) {
       novosErros.imc = 'IMC precisa estar entre 1 e 50';
     }
-
     setErros(novosErros);
     return Object.keys(novosErros).length === 0;
   };
@@ -196,7 +183,14 @@ const Hipertensao = () => {
     campo: keyof DadosQuestionarioHipertensao,
     valor: any
   ) => {
-    setDadosFormulario((prev) => ({ ...prev, [campo]: valor }));
+    setDadosFormulario((prev) => {
+      const updated = { ...prev, [campo]: valor };
+      if (updated.peso > 0 && updated.altura > 0) {
+        const alturaMetros = updated.altura / 100;
+        updated.imc = Number((updated.peso / alturaMetros ** 2).toFixed(1));
+      }
+      return updated;
+    });
   };
 
   const handleSubmitQuestionario = async () => {
@@ -221,7 +215,7 @@ const Hipertensao = () => {
 
       setTimeout(() => {
         router.push('/');
-      }, 20000);
+      }, 5000);
     } catch (error) {
       console.error('Erro:', error);
       showErrorToast(addToast)('Erro ao calcular risco');
@@ -229,8 +223,6 @@ const Hipertensao = () => {
       setCarregando(false);
     }
   };
-
-  const router = useRouter();
 
   return (
     <div className="min-h-screen bg-gray-50 py-6">
@@ -253,6 +245,63 @@ const Hipertensao = () => {
               }}
               className="bg-white rounded-lg shadow-md p-6"
             >
+              {/* Peso */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Peso (kg) *
+                </label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={dadosFormulario.peso || ''}
+                  onChange={(e) =>
+                    handleInputChange('peso', parseFloat(e.target.value) || 0)
+                  }
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    erros.peso ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  placeholder="Digite seu peso em kg"
+                  min="10"
+                  max="300"
+                />
+                {erros.peso && (
+                  <p className="text-red-500 text-sm mt-1">{erros.peso}</p>
+                )}
+              </div>
+
+              {/* Altura */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Altura (cm) *
+                </label>
+                <input
+                  type="text"
+                  value={dadosFormulario.altura || ''}
+                  onChange={(e) => handleInputChange('altura', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    erros.altura ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  placeholder="Digite sua altura em cm (ex: 170 ou 1,70)"
+                />
+                {erros.altura_convertida && (
+                  <p className="text-blue-600 text-sm mt-1">
+                    {erros.altura_convertida}
+                  </p>
+                )}
+                {erros.altura && (
+                  <p className="text-red-500 text-sm mt-1">{erros.altura}</p>
+                )}
+              </div>
+
+              <div className="text-sm text-gray-600 mt-2">
+                IMC Calculado:{' '}
+                <span className="font-medium">
+                  {dadosFormulario.imc || '--'}
+                </span>
+              </div>
+
+              <div className="m-10"></div>
+
               {/* Perguntas em Linhas */}
               <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Idade e IMC */}
@@ -270,22 +319,6 @@ const Hipertensao = () => {
                     placeholder="Digite sua idade"
                     min="1"
                     max="120"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Índice de Massa Corporal (IMC) *
-                  </label>
-                  <input
-                    type="number"
-                    value={dadosFormulario.imc || ''}
-                    onChange={(e) =>
-                      handleInputChange('imc', parseFloat(e.target.value) || 0)
-                    }
-                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Digite seu IMC"
-                    min="1"
-                    max="50"
                   />
                 </div>
 

@@ -11,6 +11,7 @@ import {
 import Cookies from 'js-cookie';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { ChevronLeft } from 'lucide-react';
 
 interface DadosQuestionario {
   idade: number;
@@ -206,7 +207,7 @@ const Diabetes = () => {
 
       setTimeout(() => {
         router.push('/');
-      }, 20000);
+      }, 5000);
     } catch (error) {
       console.error('Erro:', error);
       showErrorToast(addToast)('Erro ao calcular risco');
@@ -324,27 +325,28 @@ const Diabetes = () => {
                       Altura (cm) *
                     </label>
                     <input
-                      type="number"
+                      type="text"
                       value={dadosFormulario.altura || ''}
                       onChange={(e) =>
-                        handleInputChange(
-                          'altura',
-                          parseFloat(e.target.value) || 0
-                        )
+                        handleInputChange('altura', e.target.value)
                       }
                       className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                         erros.altura ? 'border-red-500' : 'border-gray-300'
                       }`}
-                      placeholder="Digite sua altura em cm"
-                      min="50"
-                      max="250"
+                      placeholder="Digite sua altura em cm (ex: 170 ou 1,70)"
                     />
+                    {erros.altura_convertida && (
+                      <p className="text-blue-600 text-sm mt-1">
+                        {erros.altura_convertida}
+                      </p>
+                    )}
                     {erros.altura && (
                       <p className="text-red-500 text-sm mt-1">
                         {erros.altura}
                       </p>
                     )}
                   </div>
+
                   <div className="text-sm text-gray-600 mt-2">
                     IMC Calculado:{' '}
                     <span className="font-medium">
@@ -406,8 +408,8 @@ const Diabetes = () => {
                       htmlFor="atividade_fisica"
                       className="ml-2 text-sm font-medium text-gray-900"
                     >
-                      Pratico atividade física regular (pelo menos 150 minutos
-                      por semana)
+                      Pratico atividade física regular (pelo menos 2 horas e 30
+                      minutos por semana)
                     </label>
                   </div>
 
